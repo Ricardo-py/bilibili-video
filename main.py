@@ -7,10 +7,6 @@ from queue import Queue
 import threading
 
 
-#需要解决的问题：
-#1.cookie要定时更新
-#2.这种爬取方法对于所有视频不是通用的
-
 headers_last_ep = {
     'Accept':'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
     'Accept-Encoding':'gzip,deflate,br',
@@ -115,9 +111,7 @@ def get_season_id(bangumi):
     return result
 
 def get_url_info(bangumi):
-    #得到season_id
     id_info = get_season_id(bangumi)[0]
-    #得到第一部分的ep_id
     html = requests.get("https://search.bilibili.com/bangumi?keyword="+bangumi, headers=headers_first)
     soup = BeautifulSoup(html.text, 'lxml')
     find_ep = re.compile(r'.*?"eps":(.*?)}],*?')
@@ -151,27 +145,8 @@ def get_url_info(bangumi):
 
 if __name__ == '__main__':
     main("搞笑漫画日和")
-    #strr = "sdffs/sdfsaf"
-    #print(strr.replace('/',''))
 
 
 
 
 
-
-
-# url1 = 'http://cn-zjjh5-dx-v-01.acgvideo.com/upgcxcode/06/42/101834206/101834206-1-32.flv?expires=1563373800&platform=pc&ssig=JinI-wZXQZ9VzalxLORUww&oi=454532687&trid=d1ebd2afbca74cae906b9c49775b0f36p&nfb=maPYqpoel5MI3qOUX6YpRA==&nfc=1'
-# url2 = 'http://cn-jstz-dx-v-04.acgvideo.com/upgcxcode/06/42/101834206/101834206-1-32.flv?expires=1563373800&platform=pc&ssig=JinI-wZXQZ9VzalxLORUww&oi=454532687&trid=d1ebd2afbca74cae906b9c49775b0f36p&nfb=maPYqpoel5MI3qOUX6YpRA==&nfc=1'
-# url3 = 'url=http://cn-zjwz3-dx-v-11.acgvideo.com/upgcxcode/06/42/101834206/101834206-1-32.flv?expires=1563373800&platform=pc&ssig=JinI-wZXQZ9VzalxLORUww&oi=454532687&trid=d1ebd2afbca74cae906b9c49775b0f36p&nfb=maPYqpoel5MI3qOUX6YpRA==&nfc=1'
-#
-# data1 = requests.get(url=url1,headers=headers)
-# print("开始写入")
-# with open('1.mp4','wb') as f:
-#     f.write(data1.content)
-#
-# data2 = requests.get(url=url2,headers=headers)
-# with open('2.mp4','wb') as f:
-#     f.write(data2.content)
-
-#print(data.content)
-#print(data.text)
