@@ -3,6 +3,9 @@ from bs4 import BeautifulSoup
 import re
 import json
 import os
+from queue import Queue
+import threading
+
 
 #需要解决的问题：
 #1.cookie要定时更新
@@ -40,13 +43,23 @@ headers = {
     'Cookie': 'buvid3=94CD553E-C174-4C79-BA0C-B0369C33F27E149011infoc; LIVE_BUVID=AUTO8615317334070855; fts=1531733421; rpdid=oqllxikxwidoskomkpoiw; CURRENT_FNVAL=16; DedeUserID=15059388; DedeUserID__ckMd5=52b5bf0bb36f6fd7; SESSDATA=a27a1af6%2C1564454175%2Cc91d3661; bili_jct=a5a6546ae939914ef3f45d19df7d82b0; UM_distinctid=16ba779892f87-0c7cf860177303-41564133-1fa400-16ba77989301cb; stardustvideo=1; finger=c650951b; flash_player_gray=false; arrange=list; sid=5lqkwn06'
 }
 
-def main(bangumi):
-    info_list = get_url_info(bangumi)
-    root_path = 'E:/bilibilivideos'
-    if not os.path.exists(root_path):
-        os.mkdir(root_path)
-    info_list = get_url_info(bangumi)
-    for info in info_list:
+class MyThread(threading.Thread):
+    def __init__(self,func,name=''):
+        threading.Thread.__init__(self)
+        self.func = func
+        self.name = name
+
+    def run(self):
+        self.func()
+
+
+info_queue = Queue()
+root_path = 'E:/bilibilivideos'
+def video_download():
+    global info_queue
+    while (not info_queue.empty()):
+        print("队列是否为空:" + str(info_queue.empty()))
+        info = info_queue.get(1)
         print(info)
         path = root_path + '/' + info['name']
         if not os.path.exists(path):
@@ -54,7 +67,7 @@ def main(bangumi):
         avid = info['aid']
         cid = info['cid']
         ep_last_id = info['ep_last_id']
-        url = 'https://api.bilibili.com/pgc/player/web/playurl?cid='+str(cid)+'&avid='+str(avid)+'&qn=80&otype=json&player=1&fnval=2&fnver=0&ep%5Fid='+ str(ep_last_id)
+        url = 'https://api.bilibili.com/pgc/player/web/playurl?cid='+str(cid)+'&avid='+str(avid)+'&qn=64&otype=json&player=1&fnval=2&fnver=0&ep%5Fid='+ str(ep_last_id)
         temp = requests.get(url,headers=headers).text
         print(temp)
         url_video = json.loads(temp)['result']['durl'][0]['url']
@@ -62,11 +75,28 @@ def main(bangumi):
         print(url_video)
         result = requests.get(url_video,headers=headers).content
         with open(path + '/' + (info['long_title'] + info['title']).replace('/','') + '.mp4','wb') as f:
-            print("正在写入文件"+info['long_title'] + info['title'])
             f.write(result)
             print(info['long_title']+info['title'] + "下载完成")
+    print("结束")
     return
 
+def main(bangumi):
+    info_list = get_url_info(bangumi)
+    for info in info_list:
+        info_queue.put(info)
+    threads = []
+    nloops = range(5)
+    for i in nloops:
+        t = MyThread(video_download,video_download.__name__)
+        threads.append(t)
+
+    for i in nloops:
+        threads[i].start()
+
+    for i in nloops:
+        threads[i].join()
+
+    print("下载完成")
 def get_season_id(bangumi):
     html = requests.get("https://search.bilibili.com/bangumi?keyword="+bangumi, headers=headers_first)
     soup = BeautifulSoup(html.text, 'lxml')
@@ -120,7 +150,7 @@ def get_url_info(bangumi):
 
 
 if __name__ == '__main__':
-    main("鬼灭之刃")
+    main("搞笑漫画日和")
     #strr = "sdffs/sdfsaf"
     #print(strr.replace('/',''))
 
