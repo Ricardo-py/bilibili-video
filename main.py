@@ -51,6 +51,7 @@ class MyThread(threading.Thread):
 
 info_queue = Queue()
 root_path = 'E:/bilibilivideos'
+
 def video_download():
     global info_queue
     while (not info_queue.empty()):
@@ -65,14 +66,18 @@ def video_download():
         ep_last_id = info['ep_last_id']
         url = 'https://api.bilibili.com/pgc/player/web/playurl?cid='+str(cid)+'&avid='+str(avid)+'&qn=64&otype=json&player=1&fnval=2&fnver=0&ep%5Fid='+ str(ep_last_id)
         temp = requests.get(url,headers=headers).text
-        print(temp)
-        url_video = json.loads(temp)['result']['durl'][0]['url']
-        print('正在下载',info['title'],' ',info['long_title'])
-        print(url_video)
-        result = requests.get(url_video,headers=headers).content
-        with open(path + '/' + (info['long_title'] + info['title']).replace('/','') + '.mp4','wb') as f:
-            f.write(result)
-            print(info['long_title']+info['title'] + "下载完成")
+        i = 1
+        for video in json.loads(temp)['result']['durl']:
+            url_video = video['url']
+            print('正在下载',info['title'],' ',info['long_title'],'第',i,'部分')
+            print(url_video)
+            result = requests.get(url_video,headers=headers).content
+            if not os.path.exists(path + '/' + (info['long_title'] + info['title']).replace('/','')):
+                os.mkdir(path + '/' + (info['long_title'] + info['title']).replace('/',''))
+            with open(path + '/' + (info['long_title'] + info['title']).replace('/','') + '/' + str(i) + '.mp4','wb') as f:
+                f.write(result)
+                print(info['long_title']+info['title'] + "下载完成")
+                i = i + 1
     print("结束")
     return
 
@@ -81,7 +86,7 @@ def main(bangumi):
     for info in info_list:
         info_queue.put(info)
     threads = []
-    nloops = range(5)
+    nloops = range(1)
     for i in nloops:
         t = MyThread(video_download,video_download.__name__)
         threads.append(t)
@@ -144,7 +149,7 @@ def get_url_info(bangumi):
 
 
 if __name__ == '__main__':
-    main("搞笑漫画日和")
+    main("我的青春恋爱物语果然有问题")
 
 
 
